@@ -6,18 +6,23 @@ const FormData = require('form-data');
 
 function Form() {
 
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedVideoFile, setSelectedVideoFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
 
-  const onFileChange = event => {
-    setSelectedFile(event.target.files[0]);
+  const onVideoChange = event => {
+    setSelectedVideoFile(event.target.files[0]);
   };
 
   const onTitleChange = event => {
     setTitle(event.target.value)
   }
+
+  const onImageChange = event => {
+    setSelectedImageFile(event.target.files[0]);
+  };
 
   const onDescriptionChange = event => {
     setDescription(event.target.value)
@@ -28,12 +33,60 @@ function Form() {
   }
 
   const onFileUpload = () => {
-    const formData = new FormData();
 
-    const pinFileToIPFS = async (pinataApiKey, pinataSecretApiKey) => {
+    const pinVideoFileToIPFS = async (pinataApiKey, pinataSecretApiKey) => {
       const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
       let data = new FormData();
-      data.append('file', selectedFile);
+      data.append('file', selectedVideoFile);
+
+      const metadata = JSON.stringify({
+        name: title,
+        description: description,
+        content: content,
+      });
+      data.append('pinataMetadata', metadata);
+
+      const pinataOptions = JSON.stringify({
+        cidVersion: 0,
+        customPinPolicy: {
+          regions: [
+            {
+              id: 'FRA1',
+              desiredReplicationCount: 1
+            },
+            {
+              id: 'NYC1',
+              desiredReplicationCount: 2
+            }
+          ]
+        }
+      });
+      data.append('pinataOptions', pinataOptions);
+
+      const result = axios
+        .post(url, data, {
+          maxBodyLength: 'Infinity', //this is needed to prevent axios from erroring out with large files
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
+            pinata_api_key: pinataApiKey,
+            pinata_secret_api_key: pinataSecretApiKey
+          }
+        })
+        .then(function (response) {
+          console.log(response)
+          return 'https://ipfs.io/ipfs/' + response.data.IpfsHash
+        })
+        .catch(function (error) {
+          console.log(error)
+        });
+
+      return result
+    };
+
+    const pinImageFileToIPFS = async (pinataApiKey, pinataSecretApiKey) => {
+      const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+      let data = new FormData();
+      data.append('file', selectedImageFile);
 
       const metadata = JSON.stringify({
         name: title,
@@ -97,9 +150,11 @@ function Form() {
     };
 
     async function main() {
-      const ipfsUrl = await pinFileToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY)
+      const ipfsVideoUrl = await pinVideoFileToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY)
+      const ipfsImageUrl = await pinImageFileToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY)
       const dataJson = {
-        'ipfsUrl': ipfsUrl,
+        'ipfs_video_url': ipfsVideoUrl,
+        'ipfs_backgroung_url': ipfsImageUrl,
         'metadata': {
           'title': title,
           'description': description,
@@ -114,21 +169,21 @@ function Form() {
 
   const fileData = () => {
 
-    if (selectedFile) {
+    if (selectedVideoFile) {
 
       return (
         <div>
           <h2>File Details:</h2>
 
-          <p>File Name: {selectedFile.name}</p>
+          <p>File Name: {selectedVideoFile.name}</p>
 
 
-          <p>File Type: {selectedFile.type}</p>
+          <p>File Type: {selectedVideoFile.type}</p>
 
 
           <p>
             Last Modified:{" "}
-            {selectedFile.lastModifiedDate.toDateString()}
+            {selectedVideoFile.lastModifiedDate.toDateString()}
           </p>
 
         </div>
@@ -155,9 +210,11 @@ function Form() {
         <label>Title</label>
         <input type="text" value={title} onChange={onTitleChange}></input>
         <label>Upload your video content</label>
-        <input type="file" onChange={onFileChange} />
+        <input type="file" onChange={onVideoChange} />
         <label>Description</label>
         <input type="text" value={description} onChange={onDescriptionChange}></input>
+        <label>Upload a background image</label>
+        <input type="file" onChange={onImageChange} />
         <label>Content</label>
         <input id="textarea" type="textarea" value={content} onChange={onContentChange}></input>
         <br />
