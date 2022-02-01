@@ -30,7 +30,7 @@ function Form() {
   const onFileUpload = () => {
     const formData = new FormData();
 
-    const pinFileToIPFS = (pinataApiKey, pinataSecretApiKey) => {
+    const pinFileToIPFS = async (pinataApiKey, pinataSecretApiKey) => {
       const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
       let data = new FormData();
       data.append('file', selectedFile);
@@ -39,9 +39,6 @@ function Form() {
         name: title,
         description: description,
         content: content,
-        keyvalues: {
-          exampleKey: 'exampleValue'
-        }
       });
       data.append('pinataMetadata', metadata);
 
@@ -62,7 +59,7 @@ function Form() {
       });
       data.append('pinataOptions', pinataOptions);
 
-      axios
+      const result = axios
         .post(url, data, {
           maxBodyLength: 'Infinity', //this is needed to prevent axios from erroring out with large files
           headers: {
@@ -73,13 +70,46 @@ function Form() {
         })
         .then(function (response) {
           console.log(response)
-          return response.data.IpfsHash
+          return 'https://ipfs.io/ipfs/' + response.data.IpfsHash
         })
         .catch(function (error) {
           console.log(error)
         });
+
+      return result
     };
-    pinFileToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY)
+
+    const pinJSONToIPFS = (pinataApiKey, pinataSecretApiKey, JSONBody) => {
+      const url = `https://api.pinata.cloud/pinning/pinJSONToIPFS`;
+      return axios
+        .post(url, JSONBody, {
+          headers: {
+            pinata_api_key: pinataApiKey,
+            pinata_secret_api_key: pinataSecretApiKey
+          }
+        })
+        .then(function (response) {
+          console.log(response)
+        })
+        .catch(function (error) {
+          //handle error here
+        });
+    };
+
+    async function main() {
+      const ipfsUrl = await pinFileToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY)
+      const dataJson = {
+        'ipfsUrl': ipfsUrl,
+        'metadata': {
+          'title': title,
+          'description': description,
+          'content': content
+        }
+      }
+      pinJSONToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY, dataJson)
+    }
+
+    main();
   };
 
   const fileData = () => {
