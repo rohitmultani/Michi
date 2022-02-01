@@ -1,6 +1,6 @@
 import '../form.css';
 import axios from 'axios';
-import React, { Component, useState } from 'react';
+import React, { useState } from 'react';
 import env from "react-dotenv";
 var CryptoJS = require("crypto-js");
 const FormData = require('form-data');
