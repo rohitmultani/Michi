@@ -2,6 +2,7 @@ import '../form.css';
 import axios from 'axios';
 import React, { Component, useState } from 'react';
 import env from "react-dotenv";
+var CryptoJS = require("crypto-js");
 const FormData = require('form-data');
 
 function Form() {
@@ -161,7 +162,9 @@ function Form() {
           'content': content
         }
       }
-      pinJSONToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY, dataJson)
+      var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(dataJson), 'secret key 123').toString();
+      console.log(ciphertext)
+      pinJSONToIPFS(env.PINATA_KEY, env.PINATA_SECRET_KEY, ciphertext)
     }
 
     main();

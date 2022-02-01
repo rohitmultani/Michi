@@ -7,6 +7,7 @@
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^0.25.0",
+    "crypto-js": "^4.1.1",
     "draft-js": "^0.11.7",
     "nft.storage": "^5.2.2",
     "react": "^17.0.2",
