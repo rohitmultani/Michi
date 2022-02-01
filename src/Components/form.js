@@ -1,17 +1,15 @@
 import '../form.css';
 import axios from 'axios';
 import React, { Component, useState } from 'react';
-import { Editor, EditorState } from 'draft-js';
-import 'draft-js/dist/Draft.css';
 import env from "react-dotenv";
 const FormData = require('form-data');
 
 function Form() {
 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [title, setTitle] = useState(null);
-  const [description, setDescription] = useState(null);
-  const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [content, setContent] = useState('');
 
   const onFileChange = event => {
     setSelectedFile(event.target.files[0]);
@@ -25,6 +23,10 @@ function Form() {
     setDescription(event.target.value)
   }
 
+  const onContentChange = event => {
+    setContent(event.target.value)
+  }
+
   const onFileUpload = () => {
     const formData = new FormData();
 
@@ -36,7 +38,7 @@ function Form() {
       const metadata = JSON.stringify({
         name: title,
         description: description,
-        content: editorState,
+        content: content,
         keyvalues: {
           exampleKey: 'exampleValue'
         }
@@ -127,7 +129,7 @@ function Form() {
         <label>Description</label>
         <input type="text" value={description} onChange={onDescriptionChange}></input>
         <label>Content</label>
-        <Editor editorState={editorState} onChange={setEditorState} />
+        <input id="textarea" type="textarea" value={content} onChange={onContentChange}></input>
         <br />
         <button onClick={onFileUpload}>
           Upload!
